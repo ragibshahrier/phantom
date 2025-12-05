@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PHANTOM // SYSTEM_OVERRIDE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Share Tech Mono Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #020202;
+        color: #00ff41;
+        font-family: 'Share Tech Mono', monospace;
+        overflow: hidden;
+      }
+
+      /* Custom Scrollbar for Webkit */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #020202;
+        border-left: 1px solid #1a1a1a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #00ff41;
+        border: 1px solid #00ff41;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #ccffda;
+        box-shadow: 0 0 10px #00ff41;
+      }
+
+      /* Glitch Keyframes */
+      @keyframes glitch-anim-1 {
+        0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+        20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+        40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+        60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+        80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
+        100% { clip-path: inset(30% 0 20% 0); transform: translate(1px, -1px); }
+      }
+
+      @keyframes glitch-anim-2 {
+        0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
+        20% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 2px); }
+        40% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 1px); }
+        60% { clip-path: inset(15% 0 80% 0); transform: translate(-1px, -2px); }
+        80% { clip-path: inset(55% 0 10% 0); transform: translate(1px, 2px); }
+        100% { clip-path: inset(40% 0 30% 0); transform: translate(-2px, 1px); }
+      }
+
+      /* Utility classes for glitch effect */
+      .glitch-effect::before,
+      .glitch-effect::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #020202;
+      }
+
+      .glitch-effect::before {
+        left: 2px;
+        text-shadow: -1px 0 #ff003c;
+        animation: glitch-anim-1 2s infinite linear alternate-reverse;
+      }
+
+      .glitch-effect::after {
+        left: -2px;
+        text-shadow: -1px 0 #00ccff;
+        animation: glitch-anim-2 3s infinite linear alternate-reverse;
+      }
+
+      /* Scanline Animation */
+      @keyframes scanline {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(100%); }
+      }
+      .scanline {
+        width: 100%;
+        height: 10px;
+        background: linear-gradient(to bottom, rgba(0, 255, 65, 0), rgba(0, 255, 65, 0.1), rgba(0, 255, 65, 0));
+        position: absolute;
+        z-index: 50;
+        pointer-events: none;
+        animation: scanline 4s linear infinite;
+      }
+    </style>
+
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.24",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0"
+  }
+}
+</script>
+  <script type="module" crossorigin src="/assets/index-COXUHL0u.js"></script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

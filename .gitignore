@@ -1,0 +1,274 @@
+# ===================================
+# PHANTOM PROJECT - ROOT .gitignore
+# ===================================
+
+# ===================================
+# Python / Django (Backend)
+# ===================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Django
+# *.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+/static
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Django migrations (optional - uncomment if you don't want to track migrations)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ===================================
+# Node.js / React (Frontend)
+# ===================================
+
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Production
+/build
+/dist
+
+# Misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Vite
+.vite/
+
+# TypeScript
+*.tsbuildinfo
+
+# ===================================
+# Operating System
+# ===================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===================================
+# IDEs and Editors
+# ===================================
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
+*~
+tags
+[._]*.un~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===================================
+# Project Specific
+# ===================================
+
+# Logs and temporary files
+# *.log
+# logs/
+*.tmp
+*.temp
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Documentation builds
+docs/_build/
+site/
+
+# Test files (optional - uncomment if you don't want to track test files)
+# test_*.py
+# *_test.py
+# *.test.ts
+# *.test.tsx
+# *.spec.ts
+# *.spec.tsx
+
+# Kiro IDE (keep .kiro directory but ignore some files)
+# .kiro/
+
+# Markdown documentation (optional - uncomment if you don't want to track)
+# *.md
+# !README.md
+
+# ===================================
+# Security & Secrets
+# ===================================
+
+# API Keys and Secrets
+*.pem
+*.key
+*.cert
+*.crt
+secrets.json
+credentials.json
+
+# Google Calendar API
+token.json
+credentials.json
+
+# JWT Secrets
+secret_key.txt
+
+# ===================================
+# Miscellaneous
+# ===================================
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Package files
+*.dmg
+*.pkg
+*.deb
+*.rpm
+
+# Temporary files
+tmp/
+temp/
+cache/
