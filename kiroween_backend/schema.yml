@@ -1,0 +1,1024 @@
+openapi: 3.0.3
+info:
+  title: Phantom Scheduler API
+  version: 1.0.0
+  description: AI-powered scheduling assistant with Victorian Ghost Butler persona.
+    Phantom uses natural language processing to manage calendar events, automatically
+    resolve scheduling conflicts based on priority levels, and sync with external
+    calendar services like Google Calendar.
+  contact:
+    name: Phantom Scheduler Team
+  license:
+    name: MIT License
+paths:
+  /api/auth/login/:
+    post:
+      operationId: auth_login_create
+      description: Authenticate with username and password to receive JWT access and
+        refresh tokens. Access tokens expire in 15 minutes, refresh tokens in 7 days.
+      summary: User login
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+              required:
+              - username
+              - password
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Login successful
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Missing username or password
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                description: Invalid credentials
+          description: ''
+  /api/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      description: Logout by blacklisting the refresh token. After logout, the refresh
+        token cannot be used to obtain new access tokens.
+      summary: User logout
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+                  description: Refresh token to blacklist
+              required:
+              - refresh
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Successfully logged out
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid refresh token
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                description: Authentication required
+          description: ''
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: Create a new user account with username, name, and password. Passwords
+        are securely hashed before storage.
+      summary: Register new user
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                description: User registered successfully
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid input data or username already exists
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                description: Internal server error
+          description: ''
+  /api/auth/token/refresh/:
+    post:
+      operationId: auth_token_refresh_create
+      description: Use a valid refresh token to obtain a new access token without
+        re-authenticating.
+      summary: Refresh access token
+      tags:
+      - Authentication
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+                  description: Refresh token
+              required:
+              - refresh
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: New access token generated
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Refresh token not provided
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                description: Invalid, expired, or blacklisted refresh token
+          description: ''
+  /api/categories/:
+    get:
+      operationId: categories_list
+      description: Retrieve all task categories with their priority levels.
+      summary: List categories
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - Categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+    post:
+      operationId: categories_create
+      description: Create a new task category with priority level.
+      summary: Create category
+      tags:
+      - Categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid input data
+          description: ''
+  /api/categories/{id}/:
+    get:
+      operationId: categories_retrieve
+      description: Retrieve a specific category by ID.
+      summary: Get category
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - Categories
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Category not found
+          description: ''
+  /api/chat/:
+    post:
+      operationId: chat_create
+      description: Send a natural language message to the Victorian Ghost Butler AI
+        agent. The agent will parse your request, create/modify calendar events, and
+        respond in character with confirmation of actions taken.
+      summary: Process natural language scheduling request
+      tags:
+      - Chat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Natural language scheduling request
+                  example: Schedule a study session tomorrow at 2pm for 2 hours
+              required:
+              - message
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Request processed successfully
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Empty message or invalid input
+          description: ''
+        '503':
+          content:
+            application/json:
+              schema:
+                description: AI service temporarily unavailable
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                description: Internal server error
+          description: ''
+  /api/chat/history/:
+    get:
+      operationId: chat_history_retrieve
+      description: Retrieve recent conversation history with the AI agent.
+      summary: Get conversation history
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 10
+        description: Number of recent conversations to return
+      tags:
+      - Chat
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Conversation history retrieved
+          description: ''
+  /api/events/:
+    get:
+      operationId: events_list
+      description: Retrieve all events for the authenticated user with optional filtering.
+      summary: List events
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+        description: Filter by category ID
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date-time
+        description: Filter events that start before this date (ISO 8601 format)
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: priority
+        schema:
+          type: integer
+        description: Filter by minimum priority level
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date-time
+        description: Filter events that end after this date (ISO 8601 format)
+      tags:
+      - Events
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEventListList'
+          description: ''
+    post:
+      operationId: events_create
+      description: Create a new calendar event for the authenticated user.
+      summary: Create event
+      tags:
+      - Events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid input data
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                description: Authentication required
+          description: ''
+  /api/events/{id}/:
+    get:
+      operationId: events_retrieve
+      description: Retrieve a specific event by ID.
+      summary: Get event
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Events
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Event not found
+          description: ''
+    put:
+      operationId: events_update
+      description: Update an existing event.
+      summary: Update event
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid input data
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Event not found
+          description: ''
+    patch:
+      operationId: events_partial_update
+      description: Partially update an existing event.
+      summary: Partially update event
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Events
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEventRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEventRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEventRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid input data
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Event not found
+          description: ''
+    delete:
+      operationId: events_destroy
+      description: Delete an event.
+      summary: Delete event
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Events
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          content:
+            application/json:
+              schema:
+                description: Event deleted successfully
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: Event not found
+          description: ''
+  /api/integrations/google-calendar/callback/:
+    get:
+      operationId: integrations_google_calendar_callback_retrieve
+      description: OAuth2 callback endpoint. Called by Google after user authorizes
+        access.
+      summary: Google Calendar OAuth callback
+      tags:
+      - Integrations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Connection successful
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Authorization failed or invalid code
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                description: Failed to complete connection
+          description: ''
+  /api/integrations/google-calendar/connect/:
+    get:
+      operationId: integrations_google_calendar_connect_retrieve
+      description: Initiate OAuth2 flow to connect Google Calendar. Returns authorization
+        URL.
+      summary: Connect Google Calendar
+      tags:
+      - Integrations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Authorization URL generated
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                description: Failed to initiate connection
+          description: ''
+  /api/integrations/google-calendar/disconnect/:
+    post:
+      operationId: integrations_google_calendar_disconnect_create
+      description: Remove Google Calendar connection by deleting stored tokens.
+      summary: Disconnect Google Calendar
+      tags:
+      - Integrations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Disconnected successfully
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                description: Failed to disconnect
+          description: ''
+  /api/integrations/google-calendar/status/:
+    get:
+      operationId: integrations_google_calendar_status_retrieve
+      description: Check if the authenticated user has Google Calendar connected.
+      summary: Check Google Calendar connection status
+      tags:
+      - Integrations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Connection status
+          description: ''
+  /api/preferences/:
+    get:
+      operationId: preferences_list
+      description: Retrieve preferences for the authenticated user (timezone, default
+        event duration, etc.).
+      summary: Get user preferences
+      tags:
+      - Preferences
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserPreferences'
+          description: ''
+  /api/preferences/{id}/:
+    put:
+      operationId: preferences_update
+      description: Update user preferences.
+      summary: Update user preferences
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Preferences
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferencesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserPreferencesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserPreferencesRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferences'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid input data
+          description: ''
+components:
+  schemas:
+    Category:
+      type: object
+      description: Serializer for Category model.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+        priority_level:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        color:
+          type: string
+          maxLength: 7
+        description:
+          type: string
+      required:
+      - color
+      - id
+      - name
+      - priority_level
+    CategoryRequest:
+      type: object
+      description: Serializer for Category model.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        priority_level:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+        color:
+          type: string
+          minLength: 1
+          maxLength: 7
+        description:
+          type: string
+      required:
+      - color
+      - name
+      - priority_level
+    Event:
+      type: object
+      description: |-
+        Serializer for Event model with all fields and validation.
+        Includes custom validation for date/time constraints.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        category_priority:
+          type: integer
+          readOnly: true
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        is_flexible:
+          type: boolean
+        is_completed:
+          type: boolean
+        google_calendar_id:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category
+      - category_name
+      - category_priority
+      - created_at
+      - end_time
+      - google_calendar_id
+      - id
+      - start_time
+      - title
+      - updated_at
+      - user
+    EventList:
+      type: object
+      description: |-
+        Optimized serializer for event list views.
+        Includes only essential fields for better performance.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        category:
+          type: integer
+        category_name:
+          type: string
+          readOnly: true
+        category_priority:
+          type: integer
+          readOnly: true
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        is_flexible:
+          type: boolean
+        is_completed:
+          type: boolean
+      required:
+      - category
+      - category_name
+      - category_priority
+      - end_time
+      - id
+      - start_time
+      - title
+    EventRequest:
+      type: object
+      description: |-
+        Serializer for Event model with all fields and validation.
+        Includes custom validation for date/time constraints.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        category:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        is_flexible:
+          type: boolean
+        is_completed:
+          type: boolean
+      required:
+      - category
+      - end_time
+      - start_time
+      - title
+    PaginatedCategoryList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedEventListList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventList'
+    PatchedEventRequest:
+      type: object
+      description: |-
+        Serializer for Event model with all fields and validation.
+        Includes custom validation for date/time constraints.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        category:
+          type: integer
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        is_flexible:
+          type: boolean
+        is_completed:
+          type: boolean
+    UserPreferences:
+      type: object
+      description: Serializer for user preferences (timezone, default_event_duration).
+      properties:
+        timezone:
+          type: string
+          maxLength: 50
+        default_event_duration:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+    UserPreferencesRequest:
+      type: object
+      description: Serializer for user preferences (timezone, default_event_duration).
+      properties:
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 50
+        default_event_duration:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
+    UserRegistrationRequest:
+      type: object
+      description: Serializer for user registration with username, name, and password
+        validation.
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password_confirm:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - name
+      - password
+      - password_confirm
+      - username
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: Authentication
+  description: User registration, login, logout, and token management
+- name: Events
+  description: Calendar event CRUD operations and queries
+- name: Categories
+  description: Task categories with priority levels
+- name: Chat
+  description: Natural language scheduling interface
+- name: Preferences
+  description: User preferences and settings
+- name: Integrations
+  description: External calendar integrations (Google Calendar)
