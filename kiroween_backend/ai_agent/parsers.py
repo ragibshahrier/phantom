@@ -66,6 +66,36 @@ class TemporalExpressionParser:
             # convert to user's timezone
             self.reference_time = self.reference_time.astimezone(self.user_timezone)
     
+    def _extract_duration(self, text: str) -> timedelta:
+        """
+        Extract duration from text like "for 2 hours", "for 30 minutes", "2 hour session".
+        
+        Args:
+            text: Text to search for duration
+            
+        Returns:
+            timedelta object representing the duration (defaults to 1 hour if not found)
+        """
+        text_lower = text.lower()
+        
+        # Pattern: "for X hours/minutes" or "X hour/minute"
+        # Examples: "for 2 hours", "for 30 minutes", "2 hour session", "90 minute meeting"
+        
+        # Try hours first
+        hours_match = re.search(r'(?:for\s+)?(\d+(?:\.\d+)?)\s*(?:hour|hr|hours|hrs)', text_lower)
+        if hours_match:
+            hours = float(hours_match.group(1))
+            return timedelta(hours=hours)
+        
+        # Try minutes
+        minutes_match = re.search(r'(?:for\s+)?(\d+)\s*(?:minute|min|minutes|mins)', text_lower)
+        if minutes_match:
+            minutes = int(minutes_match.group(1))
+            return timedelta(minutes=minutes)
+        
+        # Default to 1 hour if no duration specified
+        return timedelta(hours=1)
+    
     def parse(self, text: str) -> List[Tuple[datetime, datetime]]:
         """
         Parse temporal expressions from text and return datetime ranges.
@@ -81,20 +111,23 @@ class TemporalExpressionParser:
         text_lower = text.lower()
         results = []
         
+        # Extract duration once for all patterns
+        duration = self._extract_duration(text_lower)
+        
         # Try to parse various temporal patterns
         # Priority order: specific patterns first, then general patterns
         
         # Pattern: "right now" or "currently"
         if re.search(r'\b(right now|currently|now)\b', text_lower):
             start = self.reference_time
-            end = start + timedelta(hours=1)  # Default 1 hour duration
+            end = start + duration
             results.append((start, end))
             return results
         
         # Pattern: "today"
         if re.search(r'\btoday\b', text_lower):
             start = self._get_today_at_time(text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
@@ -104,14 +137,14 @@ class TemporalExpressionParser:
             # If no specific time mentioned, default to 8pm
             if start.hour < 18:  # If it parsed to before 6pm, set to evening
                 start = start.replace(hour=20, minute=0, second=0, microsecond=0)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
         # Pattern: "tomorrow"
         if re.search(r'\btomorrow\b', text_lower):
             start = self._get_tomorrow_at_time(text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
@@ -120,7 +153,7 @@ class TemporalExpressionParser:
         if next_weekday_match:
             weekday_name = next_weekday_match.group(1)
             start = self._get_next_weekday(weekday_name, text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
@@ -129,7 +162,7 @@ class TemporalExpressionParser:
         if this_weekday_match:
             weekday_name = this_weekday_match.group(1)
             start = self._get_this_weekday(weekday_name, text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
@@ -149,7 +182,7 @@ class TemporalExpressionParser:
         if single_weekday_match:
             weekday_name = single_weekday_match.group(0)
             start = self._get_next_weekday(weekday_name, text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
@@ -158,7 +191,7 @@ class TemporalExpressionParser:
         if in_days_match:
             num_days = int(in_days_match.group(1))
             start = self._get_future_date(num_days, text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
@@ -166,14 +199,27 @@ class TemporalExpressionParser:
         if in_weeks_match:
             num_weeks = int(in_weeks_match.group(1))
             start = self._get_future_date(num_weeks * 7, text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
             results.append((start, end))
             return results
         
         # Pattern: "next week"
         if re.search(r'\bnext\s+week\b', text_lower):
             start = self._get_future_date(7, text_lower)
-            end = start + timedelta(hours=1)
+            end = start + duration
+            results.append((start, end))
+            return results
+        
+        # Pattern: Standalone time like "at 10pm", "at 5:30pm" (fallback - assumes today)
+        # This catches cases where user specifies only a time without a day
+        time_only_match = re.search(r'\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)', text_lower)
+        if time_only_match:
+            # Assume today if only time is specified
+            start = self._get_today_at_time(text_lower)
+            # If the time has already passed today, schedule for tomorrow
+            if start < self.reference_time:
+                start = self._get_tomorrow_at_time(text_lower)
+            end = start + duration
             results.append((start, end))
             return results
         
@@ -314,11 +360,12 @@ class TemporalExpressionParser:
         Requirements: 9.2
         """
         results = []
+        duration = self._extract_duration(text)
         
         # If both days are the same, just return one event
         if day1_name == day2_name:
             day_date = self._get_next_weekday(day1_name, text)
-            end_date = day_date + timedelta(hours=1)
+            end_date = day_date + duration
             results.append((day_date, end_date))
             return results
         
@@ -333,7 +380,7 @@ class TemporalExpressionParser:
         # Create events for each day in the range
         current_date = day1_date
         while current_date <= day2_date:
-            end_date = current_date + timedelta(hours=1)
+            end_date = current_date + duration
             results.append((current_date, end_date))
             # Move to next day, keeping the same time
             current_date_naive = (current_date + timedelta(days=1)).replace(tzinfo=None)
@@ -356,7 +403,7 @@ class TaskCategoryExtractor:
         'Exam': ['exam', 'test', 'quiz', 'midterm', 'final'],
         'Study': ['study', 'review', 'homework', 'assignment', 'reading'],
         'Gym': ['gym', 'workout', 'exercise', 'fitness', 'training', 'run', 'jog'],
-        'Social': ['meet', 'hangout', 'party', 'dinner', 'lunch', 'coffee', 'friend'],
+        'Social': ['meet', 'hangout', 'party', 'dinner', 'lunch', 'coffee', 'friend', 'sleep', 'rest', 'nap', 'bedtime', 'wake'],
         'Gaming': ['game', 'gaming', 'play', 'stream', 'esports'],
     }
     
