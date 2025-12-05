@@ -237,8 +237,9 @@ class TemporalExpressionParser:
             Tuple of (hour, minute) in 24-hour format (defaults to (14, 0) if not found)
         """
         # First, try to extract specific time like "2pm", "9am", "14:00", "11pm"
-        # Pattern: "9pm", "2:30pm", "14:00", "11 pm"
-        time_match = re.search(r'(\d{1,2})(?::(\d{2}))?\s*(am|pm|AM|PM)?', text)
+        # Pattern: "at 9pm", "2:30pm", "14:00", "11 pm" - must have am/pm or be after "at"
+        # This prevents matching duration numbers like "30 minute"
+        time_match = re.search(r'(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|AM|PM)', text)
         if time_match:
             hour = int(time_match.group(1))
             minute = int(time_match.group(2)) if time_match.group(2) else 0
@@ -403,7 +404,7 @@ class TaskCategoryExtractor:
         'Exam': ['exam', 'test', 'quiz', 'midterm', 'final'],
         'Study': ['study', 'review', 'homework', 'assignment', 'reading'],
         'Gym': ['gym', 'workout', 'exercise', 'fitness', 'training', 'run', 'jog'],
-        'Social': ['meet', 'hangout', 'party', 'dinner', 'lunch', 'coffee', 'friend', 'sleep', 'rest', 'nap', 'bedtime', 'wake'],
+        'Social': ['meet', 'meeting', 'hangout', 'party', 'dinner', 'lunch', 'coffee', 'friend', 'sleep', 'rest', 'nap', 'bedtime', 'wake', 'call'],
         'Gaming': ['game', 'gaming', 'play', 'stream', 'esports'],
     }
     

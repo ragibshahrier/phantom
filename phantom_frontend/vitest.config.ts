@@ -4,6 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: '/phantom/', 
   test: {
     globals: true,
     environment: 'happy-dom',

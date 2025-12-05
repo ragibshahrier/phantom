@@ -321,8 +321,9 @@ def chat(request):
             else:
                 result['response'] = f"{result.get('response', '')} I could not find any matching events to delete. Please be more specific about which event you'd like to remove."
         
-        # Only create events if the user intent is to CREATE and we have all required information
-        elif user_intent == 'create' and temporal_results and task_title and category:
+        # Create events if we have all required information (temporal + title + category)
+        # This works for both explicit "create" intent and implicit scheduling (e.g., "study at 2pm")
+        elif temporal_results and task_title and category and user_intent in ['create', 'general']:
             from scheduler.models import Event, Category
             from scheduler.serializers import EventSerializer
             
