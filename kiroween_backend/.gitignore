@@ -26,12 +26,12 @@ env/
 ENV/
 
 # Django
-*.log
+# *.log
 db.sqlite3
 db.sqlite3-journal
 media/
 staticfiles/
-logs/
+# logs/
 
 # Environment variables
 .env
