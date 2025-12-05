@@ -64,6 +64,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://phantom-production-8482.up.railway.app",
+    "https://www.yourdomain.com",  # add other domains if needed
+]
+
 ROOT_URLCONF = 'phantom.urls'
 
 TEMPLATES = [

@@ -27740,3 +27740,4 @@ message: "API key not valid. Please pass a valid API key."
 2025-12-05 16:18:01 [INFO] django.utils.autoreload - Watching for file changes with StatReloader (autoreload.py:667)
 2025-12-05 16:18:13 [INFO] django.utils.autoreload - D:\UserRagib\Works\Programming\Development\Hackathon\kiroween_hackathon\kiroween_main\kiroween_backend\phantom\settings.py changed, reloading. (autoreload.py:265)
 2025-12-05 16:18:14 [INFO] django.utils.autoreload - Watching for file changes with StatReloader (autoreload.py:667)
+2025-12-05 16:51:55 [INFO] django.utils.autoreload - D:\UserRagib\Works\Programming\Development\Hackathon\kiroween_hackathon\kiroween_main\kiroween_backend\phantom\settings.py changed, reloading. (autoreload.py:265)
